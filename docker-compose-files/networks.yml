@@ -1,0 +1,12 @@
+name: networks
+networks:
+  batserver_docker_network:
+    name: batserver_docker_network
+    external: true
+
+  gluetun_network:
+    name: gluetun_network
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.22.0.0/16

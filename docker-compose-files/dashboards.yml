@@ -1,0 +1,64 @@
+name: dashboards
+services:
+  homarr:
+    container_name: homarr
+    image: ghcr.io/homarr-labs/homarr:latest
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /tank/arr/homarr/appdata:/appdata
+    environment:
+      - SECRET_ENCRYPTION_KEY=${HOMARR_SECRET_ENCRYPTION_KEY}
+      - TZ=${TZ:-Asia/Kolkata}
+    ports:
+      - "7575:7575"
+    networks:
+      batserver_docker_network:
+      gluetun_network:
+        ipv4_address: 172.22.0.28
+    restart: unless-stopped
+    
+  dashy:
+    image: lissy93/dashy
+    container_name: Dashy
+    # volumes:
+      # - /root/my-config.yml:/app/user-data/conf.yml
+    ports:
+      - 9080:8080
+    environment:
+      - NODE_ENV=production
+      - TZ=${TZ:-Asia/Kolkata}
+    restart: unless-stopped
+    networks:
+      batserver_docker_network:
+    healthcheck:
+      test: ['CMD', 'node', '/app/services/healthcheck']
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  homeassistant:
+    image: lscr.io/linuxserver/homeassistant:latest
+    container_name: homeassistant
+    # Consider if you need host network mode or can use your existing network
+    # network_mode: host 
+    networks:
+      - batserver_docker_network
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=${TZ:-Asia/Kolkata}
+    volumes:
+      - /tank/container_configs/homeassistant:/config
+    ports:
+      - 8123:8123
+    # If you have specific devices, uncomment and update
+    # devices:
+    #   - /dev/ttyUSB0:/dev/ttyUSB0  # Example for a Z-Wave or Zigbee stick
+    restart: unless-stopped
+
+networks:
+  batserver_docker_network:
+    external: true
+  gluetun_network:
+    external: true

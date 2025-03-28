@@ -1,0 +1,122 @@
+name: infra
+services:
+  cloudflare-tunnel:
+    container_name: cloudflare_tunnel
+    networks:
+      - batserver_docker_network
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    restart: always
+    environment:
+      - TZ=${TZ:-Asia/Kolkata}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  portainer:
+    image: portainer/portainer-ce:lts
+    container_name: portainer
+    restart: always
+    ports:
+      - "8000:8000"
+      - "9443:9443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    networks:
+      - batserver_docker_network
+    environment:
+      - TZ=${TZ:-Asia/Kolkata}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+  
+  nginx-proxy:
+    container_name: nginx-proxy
+    image: 'jc21/nginx-proxy-manager:latest'
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+      - '81:81'
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=${TZ:-Asia/Kolkata}
+    networks:
+      - batserver_docker_network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - /tank/container_configs/nginx-proxy/data:/data
+      - /tank/container_configs/nginx-proxy/letsencrypt:/etc/letsencrypt
+      
+  watchtower:
+    image: containrrr/watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - TZ=${TZ:-Asia/Kolkata}
+      
+  netbird:
+    image: netbirdio/netbird:latest
+    container_name: ${NETBIRD_PEER_NAME:-batserver}
+    hostname: ${NETBIRD_PEER_NAME:-batserver}
+    cap_add:
+      - NET_ADMIN
+      - SYS_ADMIN
+      - SYS_RESOURCE
+    environment:
+      - NB_SETUP_KEY=${NETBIRD_SETUP_KEY}
+      - TZ=${TZ:-Asia/Kolkata}
+    volumes:
+      - netbird-client:/etc/netbird
+    restart: unless-stopped
+    networks:
+      - batserver_docker_network
+  autoheal:
+    deploy:
+      replicas: 1
+    environment:
+      AUTOHEAL_CONTAINER_LABEL: all
+    image: willfarrell/autoheal:latest
+    network_mode: none
+    restart: always
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+  
+  traefik:
+    # The official v3 Traefik docker image
+    container_name: traefik
+    image: traefik:latest
+    networks:
+      - batserver_docker_network
+    # Enables the web UI and tells Traefik to listen to docker
+    command: --api.insecure=true --providers.docker
+    ports:
+      # The HTTP port
+      - "85:80"
+      # The Web UI (enabled by --api.insecure=true)
+      - "8580:8080"
+    volumes:
+      # So that Traefik can listen to the Docker events
+      - /var/run/docker.sock:/var/run/docker.sock
+  
+  whoami:
+    # A container that exposes an API to show its IP address
+    image: traefik/whoami
+    networks:
+      - batserver_docker_network
+    labels:
+      - "traefik.http.routers.whoami.rule=Host(`kasat.work`)"
+
+networks:
+  batserver_docker_network:
+    name: batserver_docker_network
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.100.0/24
+
+volumes:
+  portainer_data:
+  netbird-client:

@@ -1,0 +1,90 @@
+name: media-servers
+services:
+  jellyfin:
+    image: jellyfin/jellyfin
+    container_name: jellyfin
+    networks:
+      - batserver_docker_network
+    ports:
+      - "8096:8096"
+      - "8920:8920"
+      - "7359:7359/udp"
+      - "1900:1900/udp"
+    volumes:
+      - /tank/arr/jellyfin/config:/config
+      - /tank/arr/jellyfin/cache:/cache
+      - /tank/arr/data/media:/data/media
+      - /tank/arr/jellyfin/fonts:/usr/local/share/fonts/custom:ro
+    restart: unless-stopped
+    devices:
+      - /dev/dri:/dev/dri  # Pass through the Intel GPU for hardware acceleration
+    # group_add:
+    #   - "render"  # Adds container user to the render group
+    #   - "video"   # Ensures access to video acceleration
+    privileged: true  # Optional, but sometimes needed for GPU access
+    environment:
+      - JELLYFIN_PublishedServerUrl=http://jellyfin.local
+      - PUID=0
+      - PGID=0
+      - TZ=${TZ:-Asia/Kolkata}
+      
+  tdarr:
+    container_name: tdarr
+    image: ghcr.io/haveagitgat/tdarr:latest
+    restart: unless-stopped
+    networks:
+      batserver_docker_network:
+    ports:
+      - 8265:8265 # webUI port
+      - 8266:8266 # server port
+    environment:
+      - TZ=${TZ:-Asia/Kolkata}
+      # - PUID=${PUID}
+      # - PGID=${PGID}
+      - UMASK_SET=002
+      - serverIP=0.0.0.0
+      - serverPort=8266
+      - webUIPort=8265
+      - internalNode=true
+      - inContainer=true
+      - ffmpegVersion=7
+      - nodeName=MyInternalNode
+    volumes:
+      - /docker/tdarr/server:/app/server
+      - /docker/tdarr/configs:/app/configs
+      - /docker/tdarr/logs:/app/logs
+      - /tank/arr/data:/media
+      - /tank/arr/transcode_cache:/temp
+    devices:
+      - /dev/dri:/dev/dri
+    deploy:
+      resources:
+        limits:
+          cpus: 7.2
+
+  tdarr-node:
+    container_name: tdarr-node
+    image: ghcr.io/haveagitgat/tdarr_node:latest
+    restart: unless-stopped
+    network_mode: service:tdarr
+    environment:
+      - TZ=${TZ:-Asia/Kolkata}
+      # - PUID=${PUID}
+      # - PGID=${PGID}
+      - UMASK_SET=002
+      - nodeName=MyExternalNode
+      - serverIP=0.0.0.0
+      - serverPort=8266
+      - inContainer=true
+      - ffmpegVersion=7
+    volumes:
+      - /docker/tdarr/configs:/app/configs
+      - /docker/tdarr/logs:/app/logs
+      - /tank/arr/data:/media
+      - /tank/arr/transcode_cache:/temp
+    devices:
+      - /dev/dri:/dev/dri
+
+networks:
+  batserver_docker_network:
+    external: true

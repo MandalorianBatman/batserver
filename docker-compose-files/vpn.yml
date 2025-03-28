@@ -1,0 +1,66 @@
+name: vpn
+services:
+  gluetun:
+    container_name: gluetun
+    image: qmcgaw/gluetun
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    volumes:
+      - /tank/arr/gluetun:/gluetun
+    environment:
+      - VPN_SERVICE_PROVIDER=${VPN_SERVICE_PROVIDER}
+      - VPN_TYPE=${VPN_TYPE}
+      - OPENVPN_USER=${OPENVPN_USER}
+      - OPENVPN_PASSWORD=${OPENVPN_PASSWORD}
+      - SERVER_COUNTRIES=${SERVER_COUNTRIES}
+      - TZ=${TZ:-Asia/Kolkata}
+      - BLOCK_MALICIOUS=off
+      - BLOCK_SURVEILLANCE=off
+      - BLOCK_ADS=off
+      - DOT=off
+      - UPDATER_PERIOD=3h
+      # - SERVER_HOSTNAMES=
+    networks:
+      batserver_docker_network:
+      gluetun_network:
+        ipv4_address: 172.22.0.25
+    ports:
+      - "9696:9696"
+      # - "8787:8787"
+      # - "6881:6881"
+      # - "6881:6881/udp"
+    restart: on-failure:5
+
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    volumes:
+      - /tank/arr/prowlarr:/config
+    network_mode: "service:gluetun"
+    environment:
+      - TZ=${TZ:-Asia/Kolkata}
+    restart: unless-stopped
+
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - LOG_HTML=${LOG_HTML:-false}
+      - CAPTCHA_SOLVER=${CAPTCHA_SOLVER:-none}
+      - TZ=${TZ:-Asia/Kolkata}
+    ports:
+      - "${PORT:-8191}:8191"
+    networks:
+      batserver_docker_network:
+      gluetun_network:
+        ipv4_address: 172.22.0.26
+    restart: unless-stopped
+
+networks:
+  batserver_docker_network:
+    external: true
+  gluetun_network:
+    external: true

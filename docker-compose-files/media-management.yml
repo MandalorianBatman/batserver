@@ -1,0 +1,79 @@
+name: media-management
+services:
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    networks:
+      batserver_docker_network:
+      gluetun_network:
+        ipv4_address: 172.22.0.22
+    volumes:
+      - /tank/arr/radarr:/config
+      - /tank/arr/data:/data
+    ports:
+      - "7878:7878"
+    environment:
+      - TZ=${TZ:-Asia/Kolkata}
+    restart: unless-stopped
+  
+  whisparr:
+    container_name: whisparr
+    image: ghcr.io/hotio/whisparr
+    ports:
+      - "6969:6969"
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=${TZ:-Asia/Kolkata}
+      # - UMASK=002
+    volumes:
+      - /tank/arr/whisparr:/config
+      - /tank/arr/data:/data
+    networks:
+      batserver_docker_network:
+      gluetun_network:
+        ipv4_address: 172.22.0.29
+
+  jellyseerr:
+    image: fallenbagel/jellyseerr:latest
+    container_name: jellyseerr
+    networks:
+      batserver_docker_network:
+      gluetun_network:
+        ipv4_address: 172.22.0.23
+    ports:
+      - "5055:5055"
+    volumes:
+      - /tank/arr/jellyseerr:/app/config
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=${TZ:-Asia/Kolkata}
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+    restart: unless-stopped
+
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    networks:
+      batserver_docker_network:
+      gluetun_network:
+        ipv4_address: 172.22.0.24
+    volumes:
+      - /tank/arr/sonarr:/config
+      - /tank/arr/data:/data
+    ports:
+      - "8989:8989"
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=${TZ:-Asia/Kolkata}
+    restart: unless-stopped
+
+networks:
+  batserver_docker_network:
+    external: true
+  gluetun_network:
+    external: true

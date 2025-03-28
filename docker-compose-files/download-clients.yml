@@ -1,0 +1,49 @@
+name: download-clients
+services:
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    environment:
+      - WEBUI_PORT=8787
+      - TORRENTING_PORT=6881
+      - PUID=0
+      - PGID=0
+      - TZ=${TZ:-Asia/Kolkata}
+    networks:
+      batserver_docker_network:
+      gluetun_network:
+        ipv4_address: 172.22.0.27
+    volumes:
+      - /tank/arr/qbittorrent:/config
+      - /tank/arr/data/torrents:/data/torrents
+    ports:
+      - "8787:8787"
+      - "6881:6881"
+      - "6881:6881/udp"
+    restart: unless-stopped
+
+  rflood:
+    container_name: rflood
+    image: ghcr.io/hotio/rflood
+    ports:
+      - "3001:3000"
+      - "5000:5000"
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=${TZ:-Asia/Kolkata}
+      # - UMASK=002
+      - FLOOD_AUTH=false
+      - ARGS
+      - FLOOD_ARGS
+    networks:
+      - batserver_docker_network
+    volumes:
+      - /tank/arr/rflood:/config
+      - /tank/arr/data/torrents:/data
+
+networks:
+  batserver_docker_network:
+    external: true
+  gluetun_network:
+    external: true
