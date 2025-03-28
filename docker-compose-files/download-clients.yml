@@ -21,6 +21,11 @@ services:
       - "6881:6881"
       - "6881:6881/udp"
     restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.qbittorrent.rule=Host(`qbittorrent.kasat.work`)"
+      - "traefik.http.routers.qbittorrent.entrypoints=web,websecure"
+      - "traefik.http.services.qbittorrent.loadbalancer.server.port=8787"
 
   rflood:
     container_name: rflood

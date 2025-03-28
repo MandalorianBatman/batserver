@@ -23,10 +23,15 @@ services:
     #   - "video"   # Ensures access to video acceleration
     privileged: true  # Optional, but sometimes needed for GPU access
     environment:
-      - JELLYFIN_PublishedServerUrl=http://jellyfin.local
+      - JELLYFIN_PublishedServerUrl=http://jellyfin.kasat.work
       - PUID=0
       - PGID=0
       - TZ=${TZ:-Asia/Kolkata}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.jellyfin.rule=Host(`jellyfin.kasat.work`)"
+      - "traefik.http.routers.jellyfin.entrypoints=web,websecure"
+      - "traefik.http.services.jellyfin.loadbalancer.server.port=8096"
       
   tdarr:
     container_name: tdarr

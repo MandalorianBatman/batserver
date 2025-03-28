@@ -32,6 +32,11 @@ services:
       # - "6881:6881"
       # - "6881:6881/udp"
     restart: on-failure:5
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.prowlarr.rule=Host(`prowlarr.kasat.work`)"
+      - "traefik.http.routers.prowlarr.entrypoints=web,websecure"
+      - "traefik.http.services.prowlarr.loadbalancer.server.port=9696"
 
   prowlarr:
     image: lscr.io/linuxserver/prowlarr:latest

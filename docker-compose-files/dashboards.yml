@@ -16,6 +16,11 @@ services:
       gluetun_network:
         ipv4_address: 172.22.0.28
     restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.homarr.rule=Host(`homarr.kasat.work`)"
+      - "traefik.http.routers.homarr.entrypoints=web,websecure"
+      - "traefik.http.services.homarr.loadbalancer.server.port=7575"
     
   dashy:
     image: lissy93/dashy
@@ -56,6 +61,16 @@ services:
     # devices:
     #   - /dev/ttyUSB0:/dev/ttyUSB0  # Example for a Z-Wave or Zigbee stick
     restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.homeassistant.rule=Host(`ha.kasat.work`)"
+      - "traefik.http.routers.homeassistant.entrypoints=web,websecure"
+      - "traefik.http.services.homeassistant.loadbalancer.server.port=8123"
+      # Add middleware for proper header handling
+      - "traefik.http.middlewares.homeassistant-headers.headers.customrequestheaders.X-Forwarded-For=true"
+      - "traefik.http.middlewares.homeassistant-headers.headers.customrequestheaders.X-Forwarded-Proto=true"
+      - "traefik.http.middlewares.homeassistant-headers.headers.customrequestheaders.X-Forwarded-Host=true"
+      - "traefik.http.routers.homeassistant.middlewares=homeassistant-headers@docker"
 
 networks:
   batserver_docker_network:

@@ -21,6 +21,11 @@ services:
     restart: always
     healthcheck:
       disable: false
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.immich.rule=Host(`immich.kasat.work`)"
+      - "traefik.http.routers.immich.entrypoints=web,websecure"
+      - "traefik.http.services.immich.loadbalancer.server.port=2283"
 
   immich-machine-learning:
     container_name: immich_machine_learning
@@ -96,6 +101,13 @@ services:
     environment:
       - TZ=${TZ:-Asia/Kolkata}
     restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.nextcloud.rule=Host(`nextcloud.kasat.work`)"
+      - "traefik.http.routers.nextcloud.entrypoints=web,websecure"
+      - "traefik.http.services.nextcloud.loadbalancer.server.port=443"
+      - "traefik.http.middlewares.nextcloud-headers.headers.customrequestheaders.X-Forwarded-Proto=https"
+      - "traefik.http.routers.nextcloud.middlewares=nextcloud-headers@docker"
 
 networks:
   batserver_docker_network:

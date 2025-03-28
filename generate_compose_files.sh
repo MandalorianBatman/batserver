@@ -40,6 +40,11 @@ services:
     environment:
       - TZ=${TZ:-Asia/Kolkata}
     restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.radarr.rule=Host(`radarr.kasat.work`)"
+      - "traefik.http.routers.radarr.entrypoints=web,websecure"
+      - "traefik.http.services.radarr.loadbalancer.server.port=7878"
   
   whisparr:
     container_name: whisparr
@@ -78,6 +83,11 @@ services:
       - 8.8.8.8
       - 1.1.1.1
     restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.jellyseerr.rule=Host(`jellyseerr.kasat.work`)"
+      - "traefik.http.routers.jellyseerr.entrypoints=web,websecure"
+      - "traefik.http.services.jellyseerr.loadbalancer.server.port=5055"
 
   sonarr:
     image: lscr.io/linuxserver/sonarr:latest
@@ -96,6 +106,11 @@ services:
       - PGID=0
       - TZ=${TZ:-Asia/Kolkata}
     restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.sonarr.rule=Host(`sonarr.kasat.work`)"
+      - "traefik.http.routers.sonarr.entrypoints=web,websecure"
+      - "traefik.http.services.sonarr.loadbalancer.server.port=8989"
 
 networks:
   batserver_docker_network:
@@ -130,6 +145,11 @@ services:
       - "6881:6881"
       - "6881:6881/udp"
     restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.qbittorrent.rule=Host(`qbittorrent.kasat.work`)"
+      - "traefik.http.routers.qbittorrent.entrypoints=web,websecure"
+      - "traefik.http.services.qbittorrent.loadbalancer.server.port=8787"
 
   rflood:
     container_name: rflood
@@ -186,10 +206,15 @@ services:
     #   - "video"   # Ensures access to video acceleration
     privileged: true  # Optional, but sometimes needed for GPU access
     environment:
-      - JELLYFIN_PublishedServerUrl=http://jellyfin.local
+      - JELLYFIN_PublishedServerUrl=http://jellyfin.kasat.work
       - PUID=0
       - PGID=0
       - TZ=${TZ:-Asia/Kolkata}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.jellyfin.rule=Host(`jellyfin.kasat.work`)"
+      - "traefik.http.routers.jellyfin.entrypoints=web,websecure"
+      - "traefik.http.services.jellyfin.loadbalancer.server.port=8096"
       
   tdarr:
     container_name: tdarr
@@ -290,6 +315,11 @@ services:
       # - "6881:6881"
       # - "6881:6881/udp"
     restart: on-failure:5
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.prowlarr.rule=Host(`prowlarr.kasat.work`)"
+      - "traefik.http.routers.prowlarr.entrypoints=web,websecure"
+      - "traefik.http.services.prowlarr.loadbalancer.server.port=9696"
 
   prowlarr:
     image: lscr.io/linuxserver/prowlarr:latest
@@ -345,6 +375,11 @@ services:
       gluetun_network:
         ipv4_address: 172.22.0.28
     restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.homarr.rule=Host(`homarr.kasat.work`)"
+      - "traefik.http.routers.homarr.entrypoints=web,websecure"
+      - "traefik.http.services.homarr.loadbalancer.server.port=7575"
     
   dashy:
     image: lissy93/dashy
@@ -365,6 +400,36 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+
+  homeassistant:
+    image: lscr.io/linuxserver/homeassistant:latest
+    container_name: homeassistant
+    # Consider if you need host network mode or can use your existing network
+    # network_mode: host 
+    networks:
+      - batserver_docker_network
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=${TZ:-Asia/Kolkata}
+    volumes:
+      - /tank/container_configs/homeassistant:/config
+    ports:
+      - 8123:8123
+    # If you have specific devices, uncomment and update
+    # devices:
+    #   - /dev/ttyUSB0:/dev/ttyUSB0  # Example for a Z-Wave or Zigbee stick
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.homeassistant.rule=Host(`ha.kasat.work`)"
+      - "traefik.http.routers.homeassistant.entrypoints=web,websecure"
+      - "traefik.http.services.homeassistant.loadbalancer.server.port=8123"
+      # Add middleware for proper header handling
+      - "traefik.http.middlewares.homeassistant-headers.headers.customrequestheaders.X-Forwarded-For=true"
+      - "traefik.http.middlewares.homeassistant-headers.headers.customrequestheaders.X-Forwarded-Proto=true"
+      - "traefik.http.middlewares.homeassistant-headers.headers.customrequestheaders.X-Forwarded-Host=true"
+      - "traefik.http.routers.homeassistant.middlewares=homeassistant-headers@docker"
 
 networks:
   batserver_docker_network:
@@ -468,6 +533,11 @@ services:
       - TZ=${TZ:-Asia/Kolkata}
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.portainer.rule=Host(`portainer.kasat.work`)"
+      - "traefik.http.routers.portainer.entrypoints=web,websecure"
+      - "traefik.http.services.portainer.loadbalancer.server.port=9000"
   
   nginx-proxy:
     container_name: nginx-proxy
@@ -512,6 +582,69 @@ services:
     restart: unless-stopped
     networks:
       - batserver_docker_network
+  autoheal:
+    deploy:
+      replicas: 1
+    environment:
+      AUTOHEAL_CONTAINER_LABEL: all
+    image: willfarrell/autoheal:latest
+    network_mode: none
+    restart: always
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+  
+  traefik:
+    container_name: traefik
+    image: traefik:latest
+    networks:
+      - batserver_docker_network
+    command:
+      # Dashboard
+      - "--api=true"
+      - "--api.dashboard=true"
+      - "--api.insecure=true"  # Allow access to dashboard without auth at :8080/dashboard/
+      # Docker provider
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      # File provider for static config
+      - "--providers.file.directory=/etc/traefik/dynamic_conf"
+      # Entry points
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      # Let's Encrypt
+      - "--certificatesresolvers.letsencrypt.acme.email=sid.kasat@gmail.com"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/etc/traefik/acme/acme.json"
+      - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
+    ports:
+      - "80:80"
+      - "443:443"
+      # Dashboard port with original port mapping
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /tank/container_configs/traefik/acme:/etc/traefik/acme
+      - /tank/container_configs/traefik/dynamic_conf:/etc/traefik/dynamic_conf
+    labels:
+      - "traefik.enable=true"
+      # Dashboard accessible via hostname (optional)
+      - "traefik.http.routers.traefik.rule=Host(`traefik.kasat.work`)"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.routers.traefik.entrypoints=websecure"
+      - "traefik.http.routers.traefik.tls=true"
+    restart: unless-stopped
+    environment:
+      - TZ=${TZ:-Asia/Kolkata}
+  
+  whoami:
+    # Test container
+    image: traefik/whoami
+    networks:
+      - batserver_docker_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.whoami.rule=Host(`whoami.kasat.work`)"
+      - "traefik.http.routers.whoami.entrypoints=web,websecure"
 
 networks:
   batserver_docker_network:
@@ -552,6 +685,11 @@ services:
     restart: always
     healthcheck:
       disable: false
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.immich.rule=Host(`immich.kasat.work`)"
+      - "traefik.http.routers.immich.entrypoints=web,websecure"
+      - "traefik.http.services.immich.loadbalancer.server.port=2283"
 
   immich-machine-learning:
     container_name: immich_machine_learning
@@ -618,6 +756,8 @@ services:
     volumes:
       - /tank/nextcloud/config:/config
       - /tank/nextcloud/data:/data
+      - /tank/arr/data/media/tv:/tv
+      - /tank/arr/data/media/movies:/movies
     ports:
       - 7443:443
     networks:
@@ -625,6 +765,13 @@ services:
     environment:
       - TZ=${TZ:-Asia/Kolkata}
     restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.nextcloud.rule=Host(`nextcloud.kasat.work`)"
+      - "traefik.http.routers.nextcloud.entrypoints=web,websecure"
+      - "traefik.http.services.nextcloud.loadbalancer.server.port=443"
+      - "traefik.http.middlewares.nextcloud-headers.headers.customrequestheaders.X-Forwarded-Proto=https"
+      - "traefik.http.routers.nextcloud.middlewares=nextcloud-headers@docker"
 
 networks:
   batserver_docker_network:
@@ -635,6 +782,60 @@ volumes:
   model-cache:
 EOF
 echo "✅ Created immich.yml"
+
+# Create Traefik dynamic configuration directory and files
+mkdir -p /tank/container_configs/traefik/acme
+mkdir -p /tank/container_configs/traefik/dynamic_conf
+
+# Create a basic auth middleware file for Traefik dashboard protection
+cat > /tank/container_configs/traefik/dynamic_conf/middleware.yml << 'EOF'
+# Dynamic configuration for Traefik
+http:
+  middlewares:
+    secured:
+      chain:
+        middlewares:
+          - secure-headers
+          - rate-limit
+    
+    secure-headers:
+      headers:
+        browserXssFilter: true
+        contentTypeNosniff: true
+        frameDeny: true
+        sslRedirect: true
+        stsIncludeSubdomains: true
+        stsPreload: true
+        stsSeconds: 31536000
+    
+    rate-limit:
+      rateLimit:
+        average: 100
+        burst: 50
+        
+    forwarded-headers:
+      headers:
+        customRequestHeaders:
+          X-Forwarded-For: "true"
+          X-Forwarded-Host: "true"
+          X-Forwarded-Proto: "true"
+          X-Forwarded-Server: "true"
+EOF
+
+# Create TLS configuration
+cat > /tank/container_configs/traefik/dynamic_conf/tls.yml << 'EOF'
+# TLS configuration
+tls:
+  options:
+    default:
+      minVersion: VersionTLS12
+      cipherSuites:
+        - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+        - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
+EOF
+
+echo "✅ Created Traefik configuration files"
 
 # Create a helper script to start everything
 cat > run_all.sh << 'EOF'

@@ -28,26 +28,31 @@ services:
       - TZ=${TZ:-Asia/Kolkata}
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.portainer.rule=Host(`portainer.kasat.work`)"
+      - "traefik.http.routers.portainer.entrypoints=web,websecure"
+      - "traefik.http.services.portainer.loadbalancer.server.port=9000"
   
-  nginx-proxy:
-    container_name: nginx-proxy
-    image: 'jc21/nginx-proxy-manager:latest'
-    restart: unless-stopped
-    ports:
-      - '80:80'
-      - '443:443'
-      - '81:81'
-    environment:
-      - PUID=0
-      - PGID=0
-      - TZ=${TZ:-Asia/Kolkata}
-    networks:
-      - batserver_docker_network
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    volumes:
-      - /tank/container_configs/nginx-proxy/data:/data
-      - /tank/container_configs/nginx-proxy/letsencrypt:/etc/letsencrypt
+  # nginx-proxy:
+  #   container_name: nginx-proxy
+  #   image: 'jc21/nginx-proxy-manager:latest'
+  #   restart: unless-stopped
+  #   ports:
+  #     - '80:80'
+  #     - '443:443'
+  #     - '81:81'
+  #   environment:
+  #     - PUID=0
+  #     - PGID=0
+  #     - TZ=${TZ:-Asia/Kolkata}
+  #   networks:
+  #     - batserver_docker_network
+  #   extra_hosts:
+  #     - "host.docker.internal:host-gateway"
+  #   volumes:
+  #     - /tank/container_configs/nginx-proxy/data:/data
+  #     - /tank/container_configs/nginx-proxy/letsencrypt:/etc/letsencrypt
       
   watchtower:
     image: containrrr/watchtower
@@ -85,29 +90,56 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
   
   traefik:
-    # The official v3 Traefik docker image
     container_name: traefik
     image: traefik:latest
     networks:
       - batserver_docker_network
-    # Enables the web UI and tells Traefik to listen to docker
-    command: --api.insecure=true --providers.docker
+    command:
+      # Dashboard
+      - "--api=true"
+      - "--api.dashboard=true"
+      - "--api.insecure=true"  # Allow access to dashboard without auth at :8080/dashboard/
+      # Docker provider
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      # File provider for static config
+      - "--providers.file.directory=/etc/traefik/dynamic_conf"
+      # Entry points
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      # Let's Encrypt
+      - "--certificatesresolvers.letsencrypt.acme.email=sid.kasat@gmail.com"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/etc/traefik/acme/acme.json"
+      - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
     ports:
-      # The HTTP port
-      - "85:80"
-      # The Web UI (enabled by --api.insecure=true)
-      - "8580:8080"
+      - "80:80"
+      - "443:443"
+      # Dashboard port with original port mapping
+      - "8080:8080"
     volumes:
-      # So that Traefik can listen to the Docker events
-      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /tank/container_configs/traefik/acme:/etc/traefik/acme
+      - /tank/container_configs/traefik/dynamic_conf:/etc/traefik/dynamic_conf
+    labels:
+      - "traefik.enable=true"
+      # Dashboard accessible via hostname (optional)
+      - "traefik.http.routers.traefik.rule=Host(`traefik.kasat.work`)"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.routers.traefik.entrypoints=websecure"
+      - "traefik.http.routers.traefik.tls=true"
+    restart: unless-stopped
+    environment:
+      - TZ=${TZ:-Asia/Kolkata}
   
   whoami:
-    # A container that exposes an API to show its IP address
+    # Test container
     image: traefik/whoami
     networks:
       - batserver_docker_network
     labels:
-      - "traefik.http.routers.whoami.rule=Host(`kasat.work`)"
+      - "traefik.enable=true"
+      - "traefik.http.routers.whoami.rule=Host(`whoami.kasat.work`)"
+      - "traefik.http.routers.whoami.entrypoints=web,websecure"
 
 networks:
   batserver_docker_network:
