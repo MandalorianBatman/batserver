@@ -42,6 +42,10 @@ services:
       - /tank/arr/rflood:/config
       - /tank/arr/data/torrents:/data
 
+    restart: unless-stopped
+    labels:
+      - "batserver.restart.schedule=43200"  # 12 hours in seconds
+
 networks:
   batserver_docker_network:
     external: true

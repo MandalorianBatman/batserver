@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM 'http://java.sun.com/dtd/properties.dtd'>
+<properties>
+
+    <!-- Documentation: https://www.traccar.org/configuration-file/ -->
+	<entry key='database.driver'>org.mariadb.jdbc.Driver</entry>
+	<entry key='database.url'>jdbc:mariadb://traccar-db:3306/batcave?serverTimezone=Asia/Kolkata</entry>
+	<entry key='database.user'>batman</entry>
+	<entry key='database.password'>darkknight123</entry>
+
+</properties>

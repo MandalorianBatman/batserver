@@ -1,0 +1,39 @@
+# Traccar GPS tracking platform
+name: traccar
+services:
+  traccar-db:
+    image: mariadb:11
+    container_name: traccar-db
+    restart: unless-stopped
+    environment:
+      - MYSQL_DATABASE=${TRACCAR_DB_NAME}
+      - MYSQL_USER=${TRACCAR_DB_USER}
+      - MYSQL_PASSWORD=${TRACCAR_DB_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${TRACCAR_DB_PASSWORD}
+      - TZ=${TRACCAR_DB_TIMEZONE}
+    volumes:
+      - /tank/container_configs/traccar/db:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    networks:
+      - batserver_docker_network
+
+  traccar:
+    image: traccar/traccar:latest
+    container_name: traccar
+    hostname: traccar
+    restart: unless-stopped
+    ports:
+      - "8280:8082"
+      - "6000-6150:5000-5150"
+      - "6000-6150:5000-5150/udp"
+    volumes:
+      - /tank/container_configs/traccar/logs:/opt/traccar/logs:rw
+      - ./traccar_config.xml:/opt/traccar/conf/traccar.xml:ro
+      - /tank/container_configs/traccar/data:/opt/traccar/data:rw
+    networks:
+      - batserver_docker_network
+
+networks:
+  batserver_docker_network:
+    external: true

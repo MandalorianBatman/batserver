@@ -66,12 +66,15 @@ services:
       - SYS_RESOURCE
     environment:
       - NB_SETUP_KEY=${NETBIRD_SETUP_KEY}
+      - PUID=0
+      - PGID=0
       - TZ=${TZ:-Asia/Kolkata}
     volumes:
       - netbird-client:/etc/netbird
     restart: unless-stopped
     networks:
       - batserver_docker_network
+
   autoheal:
     deploy:
       replicas: 1
@@ -83,7 +86,16 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /var/run/docker.sock:/var/run/docker.sock
-  
+
+  restart-manager:
+    image: docker:cli
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./restart-tracker:/app/restart-tracker
+      - ./restart-manager.sh:/app/restart-manager.sh
+    entrypoint: sh -c "chmod +x /app/restart-manager.sh && /app/restart-manager.sh"
+
   # traefik:
   #   # The official v3 Traefik docker image
   #   container_name: traefik

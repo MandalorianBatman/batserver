@@ -21,6 +21,9 @@ services:
       - BLOCK_ADS=off
       - DOT=off
       - UPDATER_PERIOD=3h
+      - DNS=1.1.1.1,8.8.8.8
+      - FIREWALL=off
+      # - FIREWALL_OUTBOUND_SUBNETS=172.22.0.0/16
       # - SERVER_HOSTNAMES=
     networks:
       batserver_docker_network:
@@ -41,7 +44,11 @@ services:
     network_mode: "service:gluetun"
     environment:
       - TZ=${TZ:-Asia/Kolkata}
+    depends_on:
+      - gluetun
     restart: unless-stopped
+    labels:
+      - "batserver.restart.schedule=7200"  # 2 hours in seconds
 
   flaresolverr:
     image: ghcr.io/flaresolverr/flaresolverr:latest
