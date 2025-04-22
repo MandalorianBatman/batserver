@@ -22,29 +22,29 @@ services:
       - "6881:6881/udp"
     restart: unless-stopped
 
-  rflood:
-    container_name: rflood
-    image: ghcr.io/hotio/rflood
-    ports:
-      - "3001:3000"
-      - "5000:5000"
-    environment:
-      - PUID=0
-      - PGID=0
-      - TZ=${TZ:-Asia/Kolkata}
-      # - UMASK=002
-      - FLOOD_AUTH=false
-      - ARGS
-      - FLOOD_ARGS
-    networks:
-      - batserver_docker_network
-    volumes:
-      - /tank/arr/rflood:/config
-      - /tank/arr/data/torrents:/data
+  # rflood:
+  #   container_name: rflood
+  #   image: ghcr.io/hotio/rflood
+  #   ports:
+  #     - "3001:3000"
+  #     - "5000:5000"
+  #   environment:
+  #     - PUID=0
+  #     - PGID=0
+  #     - TZ=${TZ:-Asia/Kolkata}
+  #     # - UMASK=002
+  #     - FLOOD_AUTH=false
+  #     - ARGS
+  #     - FLOOD_ARGS
+  #   networks:
+  #     - batserver_docker_network
+  #   volumes:
+  #     - /tank/arr/rflood:/config
+  #     - /tank/arr/data/torrents:/data
 
-    restart: unless-stopped
-    labels:
-      - "batserver.restart.schedule=43200"  # 12 hours in seconds
+  #   restart: unless-stopped
+  #   labels:
+  #     - "batserver.restart.schedule=43200"  # 12 hours in seconds
 
 networks:
   batserver_docker_network:

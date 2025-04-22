@@ -6,7 +6,7 @@ services:
     volumes:
       - /tank/location/mosquitto/data:/mosquitto/data
       - /tank/location/mosquitto/log:/mosquitto/log
-      # - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - ./mosquitto.conf/mosquitto.conf:/mosquitto/config/mosquitto.conf
     ports:
       - "18831:1883"    # Changed host port to 18831
       - "9011:9001"    # Changed host port to 90011

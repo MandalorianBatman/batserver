@@ -16,7 +16,7 @@ docker compose -f docker-compose-files/vpn.yml up -d
 for file in docker-compose-files/*.yml; do
   if [[ "$file" != "docker-compose-files/networks.yml" && "$file" != "docker-compose-files/infra.yml" && "$file" != "docker-compose-files/vpn.yml" ]]; then
     echo "Starting services from $file..."
-    docker compose -f "$file" up -d
+    docker compose -f "$file" up -d --remove-orphans
   fi
 done
 

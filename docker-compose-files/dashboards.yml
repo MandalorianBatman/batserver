@@ -1,21 +1,21 @@
 name: dashboards
 services:
-  homarr:
-    container_name: homarr
-    image: ghcr.io/homarr-labs/homarr:latest
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - /tank/arr/homarr/appdata:/appdata
-    environment:
-      - SECRET_ENCRYPTION_KEY=${HOMARR_SECRET_ENCRYPTION_KEY}
-      - TZ=${TZ:-Asia/Kolkata}
-    ports:
-      - "7575:7575"
-    networks:
-      batserver_docker_network:
-      gluetun_network:
-        ipv4_address: 172.22.0.28
-    restart: unless-stopped
+  # homarr:
+  #   container_name: homarr
+  #   image: ghcr.io/homarr-labs/homarr:latest
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #     - /tank/arr/homarr/appdata:/appdata
+  #   environment:
+  #     - SECRET_ENCRYPTION_KEY=${HOMARR_SECRET_ENCRYPTION_KEY}
+  #     - TZ=${TZ:-Asia/Kolkata}
+  #   ports:
+  #     - "7575:7575"
+  #   networks:
+  #     batserver_docker_network:
+  #     gluetun_network:
+  #       ipv4_address: 172.22.0.28
+  #   restart: unless-stopped
     
   dashy:
     image: lissy93/dashy
